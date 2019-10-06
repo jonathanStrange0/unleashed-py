@@ -21,7 +21,7 @@ def read(filename):
 
 setup(
     name="unleashed-py",
-    version="0.0.13",
+    version="1.0.1",
     url="https://github.com/jonathanStrange0/unleashed-py",
     license='MIT',
 
