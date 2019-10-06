@@ -1,5 +1,10 @@
 """unleashed-py - Python package to connect to the Unleashed Software inventory management API"""
-
-__version__ = '0.0.2'
+import sys, os
+__version__ = '0.0.13'
 __author__ = 'Jonathan Mucha <jonmucha@gmail.com>'
-__all__ = []
+sys.path.append(os.path.join(os.path.dirname(__file__)))
+
+# __all__ = []
+from .unleashed_py import UnleashedBase
+from .unleashed_py import Resource
+from .unleashed_py import EditableResource
