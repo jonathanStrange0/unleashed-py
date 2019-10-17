@@ -1,5 +1,6 @@
-import requests,hmac, hashlib, base64, json, re
+import requests, hmac, hashlib, base64, json, re
 from datetime import datetime
+
 
 class UnleashedBase:
 	"""
@@ -10,11 +11,11 @@ class UnleashedBase:
 			api_add: the address of the api access to Unleashed, typically https://api.unleashedsoftware.com
 	"""
 
-	def __init__(self, auth_id, auth_sig,  api_add):
+	def __init__(self, auth_id, auth_sig, api_add):
 		self.header = {'Content-Type': 'application/json', \
-			'Accept':'application/json',\
-			'api-auth-id':auth_id,
-			'api-auth-signature':None}
+					   'Accept': 'application/json', \
+					   'api-auth-id': auth_id,
+					   'api-auth-signature': None}
 		self.auth_sig = auth_sig
 		self.auth_id = auth_id
 		self.api_add = api_add
@@ -36,6 +37,7 @@ class UnleashedBase:
 		myhmacsha256 = hmac.new(key, msg, digestmod=hashlib.sha256).digest()
 		return base64.b64encode(myhmacsha256).decode()
 
+
 class Resource(UnleashedBase):
 	"""
 		Class for getting information out of the Unleashed API.
@@ -50,25 +52,27 @@ class Resource(UnleashedBase):
 			**kwargs: Any of the filters availbe for each Unleashed API resource as key-value pairs e.g. productCode='Artifact'
 	"""
 
-	def __init__(self, resource_name, auth_id, auth_sig,  api_add, **kwargs):
-		super().__init__(auth_id, auth_sig,  api_add)
+	def __init__(self, resource_name, auth_id, auth_sig, api_add, **kwargs):
+		super().__init__(auth_id, auth_sig, api_add)
 		# Create the filter:
 		self.resource_name = resource_name
 		self.filter = ''
+		self.page = 1
 		for name, value in kwargs.items():
 			if self.filter == '':
-			# print('{0}={1}'.format(name, value))
+				# print('{0}={1}'.format(name, value))
 				self.filter += '{0}={1}'.format(name, value)
 			else:
 				self.filter += '&{0}={1}'.format(name, value)
 		# print(self.filter)
 		if self.filter is not None:
-			self.header['api-auth-signature'] = self.getSignature(self.filter,self.auth_sig)
-			self.address = self.api_add+'/'+self.resource_name+'?'+self.filter
+			self.header['api-auth-signature'] = self.getSignature(self.filter, self.auth_sig)
+			self.address = self.api_add + '/' + self.resource_name + '/' +str(self.page) + '?' + self.filter
 		else:
-			self.header['api-auth-signature'] = self.getSignature('',self.auth_sig)
+			self.header['api-auth-signature'] = self.getSignature('', self.auth_sig)
 			self.header = self.header
-			self.address = self.api_add+'/'+self.resource_name
+			self.address = self.api_add + '/' + self.resource_name + '/' +str(self.page)
+		print(self.address)
 
 	def first_page(self):
 		"""
@@ -79,7 +83,7 @@ class Resource(UnleashedBase):
 				json object containing results from first page of get request
 		"""
 		# print(self.address, self.header)
-		return(json.dumps(requests.get(self.address, headers = self.header).json()['Items']))
+		return (json.dumps(requests.get(self.address, headers=self.header).json()['Items']))
 
 	def all_results(self):
 		"""
@@ -88,19 +92,26 @@ class Resource(UnleashedBase):
 			Returns:
 				json object containing every result from get request
 		"""
+
 		pages = self.getPages()
 		results = []
-		for i in range(1,pages + 1):
-			r = requests.get(self.address, headers = self.header).json()['Items']
+		for i in range(1, pages + 1):
+			self.page = i
+			r = requests.get(self.address, headers=self.header).json()['Items']
 			for result in r:
-				results.append(result)
-		return(json.dumps(results))
+				if result not in results:
+					results.append(result)
+
+		return (json.dumps(results))
 
 	def getPages(self):
 		"""
 			Method to return the number of pages of information a resouce request has.
 		"""
-		return(requests.get(self.address, headers = self.header).json()['Pagination']['NumberOfPages'])
+		return (requests.get(self.address, headers=self.header).json()['Pagination']['NumberOfPages'])
+
+	def build_header():
+
 
 class EditableResource(Resource):
 	"""
@@ -116,8 +127,8 @@ class EditableResource(Resource):
 			**kwargs: Any of the filters availbe for each Unleashed API resource as key-value pairs e.g. productCode='Artifact'
 	"""
 
-	def __init__(self, resource_name, auth_id, auth_sig,  api_add, **kwargs):
-		super().__init__(resource_name, auth_id, auth_sig,  api_add, **kwargs)
+	def __init__(self, resource_name, auth_id, auth_sig, api_add, **kwargs):
+		super().__init__(resource_name, auth_id, auth_sig, api_add, **kwargs)
 
 	def post_object(self, guid, object):
 		"""
@@ -127,4 +138,4 @@ class EditableResource(Resource):
 				guid: New or existing GUID representing the object to be posted.
 				object: JSON object to be posted to unleashed.
 		"""
-		return(requests.post(self.address, headers = self.header, data = object))
+		return (requests.post(self.address, headers=self.header, data=object))
