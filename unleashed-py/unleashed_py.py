@@ -65,14 +65,7 @@ class Resource(UnleashedBase):
 			else:
 				self.filter += '&{0}={1}'.format(name, value)
 		# print(self.filter)
-		if self.filter is not None:
-			self.header['api-auth-signature'] = self.getSignature(self.filter, self.auth_sig)
-			self.address = self.api_add + '/' + self.resource_name + '/' +str(self.page) + '?' + self.filter
-		else:
-			self.header['api-auth-signature'] = self.getSignature('', self.auth_sig)
-			self.header = self.header
-			self.address = self.api_add + '/' + self.resource_name + '/' +str(self.page)
-		print(self.address)
+		self.build_header(self.page)
 
 	def first_page(self):
 		"""
@@ -96,7 +89,7 @@ class Resource(UnleashedBase):
 		pages = self.getPages()
 		results = []
 		for i in range(1, pages + 1):
-			self.page = i
+			self.build_header(i)
 			r = requests.get(self.address, headers=self.header).json()['Items']
 			for result in r:
 				if result not in results:
@@ -110,8 +103,16 @@ class Resource(UnleashedBase):
 		"""
 		return (requests.get(self.address, headers=self.header).json()['Pagination']['NumberOfPages'])
 
-	def build_header():
-
+	def build_header(self, page_num):
+		self.page = page_num
+		if self.filter is not None:
+			self.header['api-auth-signature'] = self.getSignature(self.filter, self.auth_sig)
+			self.address = self.api_add + '/' + self.resource_name + '/' +str(self.page) + '?' + self.filter
+		else:
+			self.header['api-auth-signature'] = self.getSignature('', self.auth_sig)
+			self.header = self.header
+			self.address = self.api_add + '/' + self.resource_name + '/' +str(self.page)
+		print(self.address)
 
 class EditableResource(Resource):
 	"""
