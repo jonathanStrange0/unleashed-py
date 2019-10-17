@@ -112,7 +112,7 @@ class Resource(UnleashedBase):
 			self.header['api-auth-signature'] = self.getSignature('', self.auth_sig)
 			self.header = self.header
 			self.address = self.api_add + '/' + self.resource_name + '/' +str(self.page)
-		print(self.address)
+		# print(self.address)
 
 class EditableResource(Resource):
 	"""
